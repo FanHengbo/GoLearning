@@ -1,1 +1,2 @@
 # GoLearning
+I've been reading **the go programming language** these days. It's really a nice book for a novice to begin with. I will put my own solutions of selected exercises(only those seem challenging for me) in this repo, and also I'd like to write a few notes about syntax feature, implementation details and source code analysis of GO. After all, understanding what happens under the hood is the key to lean a new programming language. 
