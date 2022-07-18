@@ -4,17 +4,17 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"gopl.io/ch4/github"
 )
 
 var timePtr = flag.String("time", "all", "issues in age categories")
+var issueUrl = flag.String("url", "repo:golang/go", "url")
 var now = time.Now()
 var yearDayNow = now.Year()*365 + now.YearDay()
 
-func ClassifyBasedOnAge(t *string, issue *Issue) bool {
+func ClassifyBasedOnAge(t *string, issue *github.Issue) bool {
 	if *t == "all" {
 		return true
 	}
@@ -33,15 +33,16 @@ func ClassifyBasedOnAge(t *string, issue *Issue) bool {
 }
 func main() {
 	flag.Parse()
-
-	result, err := github.SearchIssues(os.Args[1:])
+	url := []string{*issueUrl}
+	result, err := github.SearchIssues(url)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%d issues:\n", result.TotalCount)
+	fmt.Println(now, " ", yearDayNow)
 	for _, item := range result.Items {
 		if ClassifyBasedOnAge(timePtr, item) {
-			fmt.Printf("#%-5d %9.9s %.55s %v\n",
+			fmt.Printf("#%-5d %9.9s %.55s %10v\n",
 				item.Number, item.User.Login, item.Title, item.CreatedAt)
 		}
 	}
