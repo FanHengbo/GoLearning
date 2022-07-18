@@ -10,11 +10,11 @@ import (
 )
 
 var timePtr = flag.String("time", "all", "issues in age categories")
-var issueUrl = flag.String("url", "repo:golang/go", "url")
+var issueUrl = flag.String("repo", "repo:golang/go", "repo")
 var now = time.Now()
 var yearDayNow = now.Year()*365 + now.YearDay()
 
-func ClassifyBasedOnAge(t *string, issue *github.Issue) bool {
+func AgeFilter(t *string, issue *github.Issue) bool {
 	if *t == "all" {
 		return true
 	}
@@ -41,7 +41,7 @@ func main() {
 	fmt.Printf("%d issues:\n", result.TotalCount)
 	fmt.Println(now, " ", yearDayNow)
 	for _, item := range result.Items {
-		if ClassifyBasedOnAge(timePtr, item) {
+		if AgeFilter(timePtr, item) {
 			fmt.Printf("#%-5d %9.9s %.55s %10v\n",
 				item.Number, item.User.Login, item.Title, item.CreatedAt)
 		}
