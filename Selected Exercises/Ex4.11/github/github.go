@@ -103,30 +103,30 @@ func GetIssue(owner, repo, number string) (*Issue, error) {
 
 // issue number is ommited here
 func CreateIssue(owner, repo string) (*Issue, error) {
-
-	issue, err := GenerateIssue()
+	newIssue, err := createIssue()
 	if err != nil {
 		return nil, err
 	}
 	//Encode issue to json
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
+	issue := map[string]string{
+		"title": newIssue.Title,
+		"body":  newIssue.Body,
+	}
 	if err := encoder.Encode(issue); err != nil {
 		return nil, err
 	}
 	//POST a new issue
-	//resp, err := http.Post(IssuesURL+"/"+owner+"/"+repo+"/issues", "application/vnd.github+json", responseBody)
-	//url := strings.Join([]string{IssuesURL, owner, repo, "issues"}, "/")
-	client := &http.Client{}
 	url := IssuesURL + "/" + owner + "/" + repo + "/issues"
-	req, err := http.NewRequest(http.MethodPost, url, buf)
+	req, err := http.NewRequest("POST", url, buf)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.github+json")
-
-	resp, err := client.Do(req)
+	req.Header.Set("Authorization", "token "+os.Getenv("GITHUB_TOKEN"))
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -142,17 +142,10 @@ func CreateIssue(owner, repo string) (*Issue, error) {
 	return &result, nil
 
 }
-
-func EditIssue(owner, repo, num string) (*Issue, error) {
-	newIssue, err := GenerateIssue()
-	if err != nil {
-		return nil, err
-	}
-
-	url := IssuesURL + "/" + owner + "/" + repo + "/issues/" + num
+func editIssue(url string, issue map[string]string) (*Issue, error) {
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
-	if err := encoder.Encode(newIssue); err != nil {
+	if err := encoder.Encode(issue); err != nil {
 		return nil, err
 	}
 	req, err := http.NewRequest("PATCH", url, buf)
@@ -161,17 +154,38 @@ func EditIssue(owner, repo, num string) (*Issue, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.github+json")
-
+	req.Header.Set("Authorization", "token "+os.Getenv("GITHUB_TOKEN"))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Status code", resp.StatusCode)
+		return nil, fmt.Errorf("search query failed: %s", resp.Status)
+	}
 	defer resp.Body.Close()
-	return newIssue, nil
+	var result Issue
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+
+}
+func EditIssue(owner, repo, num string) (*Issue, error) {
+	newIssue, err := createIssue()
+	if err != nil {
+		return nil, err
+	}
+	url := IssuesURL + "/" + owner + "/" + repo + "/issues/" + num
+
+	issue := map[string]string{
+		"title": newIssue.Title,
+		"body":  newIssue.Body,
+	}
+	return editIssue(url, issue)
 }
 
-func GenerateIssue() (*Issue, error) {
-
+func createIssue() (*Issue, error) {
 	vi := "vim"
 	tmpDir := os.TempDir()
 	tmpFile, tmpFileErr := ioutil.TempFile(tmpDir, "tempFile")
@@ -223,6 +237,14 @@ func GenerateIssue() (*Issue, error) {
 		Body:  issueBody,
 	}
 	return &result, nil
+}
+
+func CloseIssue(owner, repo, num string) (*Issue, error) {
+	issue := map[string]string{
+		"state": "close",
+	}
+	url := IssuesURL + "/" + owner + "/" + repo + "/issues/" + num
+	return editIssue(url, issue)
 }
 
 //!-
