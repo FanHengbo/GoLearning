@@ -10,6 +10,7 @@ package github
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,6 +42,11 @@ type Issue struct {
 type User struct {
 	Login   string
 	HTMLURL string `json:"html_url"`
+}
+
+type IssueRequest struct {
+	Title *string `json:"title,omitempty"`
+	Body  *string `json:"body,omitempty"`
 }
 
 // SearchIssues queries the GitHub issue tracker.
@@ -98,6 +104,74 @@ func GetIssue(owner, repo, number string) (*Issue, error) {
 // issue number is ommited here
 func CreateIssue(owner, repo string) (*Issue, error) {
 
+	issue, err := GenerateIssue()
+	if err != nil {
+		return nil, err
+	}
+	//Encode issue to json
+	buf := &bytes.Buffer{}
+	encoder := json.NewEncoder(buf)
+	if err := encoder.Encode(issue); err != nil {
+		return nil, err
+	}
+	//POST a new issue
+	//resp, err := http.Post(IssuesURL+"/"+owner+"/"+repo+"/issues", "application/vnd.github+json", responseBody)
+	//url := strings.Join([]string{IssuesURL, owner, repo, "issues"}, "/")
+	client := &http.Client{}
+	url := IssuesURL + "/" + owner + "/" + repo + "/issues"
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		fmt.Printf("create issue failed: %v, status code %d, responese body: %v\n", err, resp.StatusCode, resp.Body)
+		return nil, fmt.Errorf("create issue failed: %s", err)
+	}
+	var result Issue
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+
+}
+
+func EditIssue(owner, repo, num string) (*Issue, error) {
+	newIssue, err := GenerateIssue()
+	if err != nil {
+		return nil, err
+	}
+
+	url := IssuesURL + "/" + owner + "/" + repo + "/issues/" + num
+	buf := &bytes.Buffer{}
+	encoder := json.NewEncoder(buf)
+	if err := encoder.Encode(newIssue); err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("PATCH", url, buf)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return newIssue, nil
+}
+
+func GenerateIssue() (*Issue, error) {
+
 	vi := "vim"
 	tmpDir := os.TempDir()
 	tmpFile, tmpFileErr := ioutil.TempFile(tmpDir, "tempFile")
@@ -143,7 +217,12 @@ func CreateIssue(owner, repo string) (*Issue, error) {
 	//Display issue title and body
 	fmt.Println("title: ", issueTitle)
 	fmt.Println("Body: ", issueBody)
-	return nil, fmt.Errorf("not end yet")
+
+	result := Issue{
+		Title: issueTitle,
+		Body:  issueBody,
+	}
+	return &result, nil
 }
 
 //!-

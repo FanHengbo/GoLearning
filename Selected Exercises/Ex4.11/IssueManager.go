@@ -13,5 +13,8 @@ func main() {
 			log.Fatalln("Usage: ./IssueManager [read|create|update|delete] OWNER REPO ISSUE_NUMBER")
 		}
 	*/
-	github.CreateIssue("f", "g")
+	github.CreateIssue("FanHengbo", "GoLearning")
+	//issue, _ := github.GetIssue("golang", "go", "35")
+	//fmt.Println(issue.Title, issue.Body)\
+	//github.EditIssue("FanHengbo", "GoLearning", "1")
 }
