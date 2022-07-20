@@ -18,5 +18,7 @@ func main() {
 		}
 	*/
 	//fmt.Println(newcomic.Title, "\t", newcomic.Transcript)
-	fmt.Println(comic.Database.Get(0))
+	data := comic.InitComic()
+	c, _ := data.Get(0)
+	fmt.Println(c.Transcript)
 }
