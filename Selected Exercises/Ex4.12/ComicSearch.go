@@ -18,7 +18,14 @@ func main() {
 		}
 	*/
 	//fmt.Println(newcomic.Title, "\t", newcomic.Transcript)
-	data := comic.InitComic()
-	c, _ := data.Get(0)
+	data := comic.New()
+	data.InitComic()
+	c, _ := data.Get(1)
 	fmt.Println(c.Transcript)
+	/*
+		err := data.SaveToFile("data.json")
+		if err != nil {
+			log.Fatal(err)
+		}
+	*/
 }

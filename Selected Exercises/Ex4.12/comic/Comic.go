@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 )
 
@@ -34,13 +35,30 @@ func (d *ComicsDatabase) Get(num ComicNum) (Comic, error) {
 	item := d.database[num]
 	return item, nil
 }
-
-func (d *ComicsDatabase) Save(c Comic, n ComicNum) {
-	d.database[n] = c
+func (d *ComicsDatabase) SaveToFile(fileName string) error {
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	fmt.Println("Saving data to file...")
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(d.database)
+	if err != nil {
+		return fmt.Errorf("writing error")
+	}
+	fmt.Println("Data saved")
+	return nil
 }
-
-func InitComic() *ComicsDatabase {
-	var data *ComicsDatabase = New()
+func (d *ComicsDatabase) ReadFromFile(fileName string) error {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
+}
+func (d *ComicsDatabase) InitComic() {
 	type Item struct {
 		comicInfo Comic
 		num       ComicNum
@@ -71,11 +89,9 @@ func InitComic() *ComicsDatabase {
 		if it.err != nil {
 			log.Fatal("http.get error")
 		}
-		data.database[it.num] = it.comicInfo
+		d.database[it.num] = it.comicInfo
 	}
-	comic, _ := data.Get(1)
-	fmt.Println(comic.Transcript)
-	return data
+	fmt.Println("Database has already initialized")
 }
 
 func GetComicQuantity() (int, error) {
