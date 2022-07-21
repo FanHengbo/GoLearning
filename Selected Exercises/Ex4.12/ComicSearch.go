@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"Ex4.12/comic"
 )
@@ -18,8 +19,13 @@ func main() {
 		}
 	*/
 	//fmt.Println(newcomic.Title, "\t", newcomic.Transcript)
+
 	data := comic.New()
-	data.InitComic()
+	//data.InitComic()
+	err := data.ReadFromFile("data.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 	c, _ := data.Get(1)
 	fmt.Println(c.Transcript)
 	/*

@@ -56,13 +56,23 @@ func (d *ComicsDatabase) ReadFromFile(fileName string) error {
 		return err
 	}
 	defer file.Close()
+	decoder := json.NewDecoder(file)
+	fmt.Println("Reading...")
+	for decoder.More() {
+		err := decoder.Decode(&d.database)
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Println("Reading complete")
 	return nil
 }
+
 func (d *ComicsDatabase) InitComic() {
 	type Item struct {
-		comicInfo Comic
-		num       ComicNum
-		err       error
+		comicInfoPtr *Comic
+		num          ComicNum
+		err          error
 	}
 	//Replace 50 with maximum comics count later
 	itemChannel := make(chan Item)
@@ -70,11 +80,11 @@ func (d *ComicsDatabase) InitComic() {
 	var i ComicNum
 	var n sync.WaitGroup
 	// Not passing i into goroutine is so stupid...
-	for i = 0; i < 50; i++ {
+	for i = 1; i < 50; i++ {
 		n.Add(1)
 		go func(num ComicNum) {
 			var it Item
-			it.comicInfo, it.err = GetComic(num)
+			it.comicInfoPtr, it.err = GetComic(num)
 			it.num = num
 			itemChannel <- it
 			n.Done()
@@ -87,9 +97,9 @@ func (d *ComicsDatabase) InitComic() {
 	}()
 	for it := range itemChannel {
 		if it.err != nil {
-			log.Fatal("http.get error")
+			log.Fatal(it.err)
 		}
-		d.database[it.num] = it.comicInfo
+		d.database[it.num] = *it.comicInfoPtr
 	}
 	fmt.Println("Database has already initialized")
 }
@@ -113,21 +123,21 @@ func GetComicQuantity() (int, error) {
 	return result.Num, nil
 
 }
-func GetComic(num ComicNum) (Comic, error) {
-	var result Comic
+func GetComic(num ComicNum) (*Comic, error) {
+	result := new(Comic)
 	url := fmt.Sprintf("https://xkcd.com/%d/info.0.json", num)
 	sema <- struct{}{}
 	resp, err := http.Get(url)
 	<-sema
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return result, err
+		return nil, fmt.Errorf("network error: %v", resp.StatusCode)
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return result, err
+		return nil, err
 	}
 	return result, nil
 }
