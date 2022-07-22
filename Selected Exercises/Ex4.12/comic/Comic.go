@@ -74,13 +74,15 @@ func (d *ComicsDatabase) InitComic() {
 		num          ComicNum
 		err          error
 	}
-	//Replace 50 with maximum comics count later
+
 	itemChannel := make(chan Item)
 	fmt.Println("Database initializing...")
 	var i ComicNum
 	var n sync.WaitGroup
-	// Not passing i into goroutine is so stupid...
-	for i = 1; i < 50; i++ {
+	//Replace 50 with maximum comics count later
+	var comicQuantity ComicNum = 50
+	// Not passing i into goroutine as argument is so stupid...
+	for i = 1; i < comicQuantity; i++ {
 		n.Add(1)
 		go func(num ComicNum) {
 			var it Item
@@ -112,7 +114,8 @@ func GetComicQuantity() (int, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return -1, err
+		//Under this circumstance, err is still nil
+		return -1, fmt.Errorf("http get error: %v", resp.StatusCode)
 	}
 	result := struct {
 		Num int

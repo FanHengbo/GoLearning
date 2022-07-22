@@ -3,35 +3,19 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
 	"Ex4.12/comic"
 )
 
 func main() {
-	/*
-		argc := len(os.Args)
-		if argc != 3 {
-			log.Fatalln("Usage: ./ComicSearch <get|search> comicNumber / keyowrds")
-		}
-		newcomic, err := comic.GetComic(2)
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
-	//fmt.Println(newcomic.Title, "\t", newcomic.Transcript)
-
+	searchNum, _ := strconv.Atoi(os.Args[2])
 	data := comic.New()
-	//data.InitComic()
 	err := data.ReadFromFile("data.json")
 	if err != nil {
 		log.Fatal(err)
 	}
-	c, _ := data.Get(1)
+	c, _ := data.Get(comic.ComicNum(searchNum))
 	fmt.Println(c.Transcript)
-	/*
-		err := data.SaveToFile("data.json")
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
 }
