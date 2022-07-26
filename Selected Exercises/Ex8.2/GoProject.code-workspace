@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../../../CS/CS/GoProject"
+		},
+		{
+			"path": "../../../tra/quic-example"
+		},
+		{
+			"path": "../../../hello"
+		},
+		{
+			"path": "../../../Downloads/quic-go-master"
+		},
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../gopl.io"
+		}
+	],
+	"settings": {}
+}
